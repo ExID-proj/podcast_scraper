@@ -14,10 +14,14 @@ def download_libsyn(url):
     """ Process a single libsyn feed."""
 
     print("Requesting URL %s" % url)
-    data = requests.get(url).text
-    parsed_rss = feedparser.parse(data)
-    podcast_title = parsed_rss["feed"]["title"]
-    print("RSS feed read, extracted title %s" % podcast_title)
+    try:
+        data = requests.get(url).text
+        parsed_rss = feedparser.parse(data)
+        podcast_title = parsed_rss["feed"]["title"]
+        print("RSS feed read, extracted title %s" % podcast_title)
+    except:
+        print("Fatal error reading basic RSS feed.")
+        return 1
 
     if not os.path.isdir("./shows/%s" % podcast_title):
         try:
@@ -45,8 +49,11 @@ def download_libsyn(url):
     print("Now proceeding to download MP3s.")
     for index, row in enumerate(episodes):
         print("  Downloading episode %s/%s: %s" %
-              (index, len(episodes), row[1]))
-        download_episode(podcast_title, row)
+              ((index + 1), len(episodes), row[1]))
+        if row[0]:
+            download_episode(podcast_title, row)
+        else:
+            print("  Error downloading episode -- no URL?")
 
     return 0
 
@@ -80,8 +87,15 @@ def process_all_urls(feed_list):
     """ Iterate over several feeds. """
     feed_urls = [x.strip() for x in open(feed_list, "r").readlines()]
     print("%s feeds to scrape..." % len(feed_urls))
+    feed_errors = []
     for feed_url in feed_urls:
-        download_libsyn(feed_url)
+        result = download_libsyn(feed_url)
+        if result:
+            feed_errors.append(feed_url)
+
+    if feed_errors:
+        print("Errors were detected in the following feeds:")
+        print(feed_errors)
 
 if __name__ == "__main__":
     process_all_urls("feeds.txt")
