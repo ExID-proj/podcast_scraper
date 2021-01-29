@@ -57,15 +57,14 @@ def download_episode(podcast_title, row):
         return
 
     data = requests.get(row[0], stream=True)
-    with (open("./shows/%s/episodes/%s" %
-               (podcast_title, row[1]), "wb")
-          as out_file):
+    with open("./shows/%s/episodes/%s" % (podcast_title, row[1]), "wb") as out_file:
         data.raw.decode_content = True
         shutil.copyfileobj(data.raw, out_file)
 
 def parse_file_out(title):
     """ Extract an episode filename from the episode title. """
-    if match := re.search("Episode ([0-9]{1,4})", title, re.IGNORECASE):
+    match = re.search("Episode ([0-9]{1,4})", title, re.IGNORECASE)
+    if match:
         file_out = "%s - %s.mp3" % (match.group(1), title)
     else:
         file_out = "%s.mp3" % title
